@@ -4,7 +4,10 @@
 
 namespace App\Modules\Document\Filament\Widgets;
 
+use App\Modules\Document\Models\Document;
+use App\Modules\Tenant\Models\Tenant;
 use App\Modules\Tenant\Services\SubscriptionService;
+use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -16,6 +19,10 @@ class DocumentQuotaWidget extends BaseWidget
     {
         $user = auth()->user();
         $tenant = $user->tenant;
+
+        if ($user->isSuperAdmin()) {
+            return $this->getSuperAdminStats();
+        }
 
         $subscriptionService = app(SubscriptionService::class);
         $quotaInfo = $subscriptionService->getQuotaInfo($tenant);
@@ -63,6 +70,30 @@ class DocumentQuotaWidget extends BaseWidget
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('warning')
                 ->url(route('filament.admin.pages.dashboard')),
+        ];
+    }
+
+    private function getSuperAdminStats(): array
+    {
+        $totalDocuments = Document::withoutGlobalScopes()->count();
+        $totalTenants = Tenant::clientTenants()->count();
+        $totalUsers = User::count();
+
+        return [
+            Stat::make('Total Documents', number_format($totalDocuments))
+                ->description('Across all tenants')
+                ->descriptionIcon('heroicon-m-document-text')
+                ->color('primary'),
+
+            Stat::make('Client Tenants', number_format($totalTenants))
+                ->description('Active client organizations')
+                ->descriptionIcon('heroicon-m-building-office')
+                ->color('success'),
+
+            Stat::make('Total Users', number_format($totalUsers))
+                ->description('All users in system')
+                ->descriptionIcon('heroicon-m-users')
+                ->color('info'),
         ];
     }
 

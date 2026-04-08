@@ -44,6 +44,7 @@ use Illuminate\Support\Carbon;
  * @method static User firstOrFail()
  * @method static User firstOrCreate(array $attributes)
  * @method static User updateOrCreate(array $attributes, array $values = [])
+ * @method static int count()
  */
 class User extends Authenticatable
 {
@@ -131,6 +132,11 @@ class User extends Authenticatable
         return $this->role === UserRole::HEAD;
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === UserRole::SUPERADMIN;
+    }
+
     public function isDirector(): bool
     {
         return $this->role === UserRole::DIRECTOR;
@@ -153,10 +159,37 @@ class User extends Authenticatable
 
     public function canManageUser(User $targetUser): bool
     {
-        if ($this->tenant_id !== $targetUser->tenant_id) {
-            return false;
+        if ($this->isSuperAdmin()) {
+            return $this->role->canManageUser($targetUser->role);
         }
 
-        return $this->role->canManageUser($targetUser->role);
+        if ($this->isHead()) {
+            if ($this->tenant_id !== $targetUser->tenant_id) {
+                return false;
+            }
+            return $this->role->canManageUser($targetUser->role);
+        }
+
+        return false;
+    }
+
+    public function canManageTenants(): bool
+    {
+        return $this->role->canManageTenants();
+    }
+
+    public function canTransferUserBetweenTenants(): bool
+    {
+        return $this->role->canTransferUserBetweenTenants();
+    }
+
+    public function canViewAllAuditLogs(): bool
+    {
+        return $this->role->canViewAllAuditLogs();
+    }
+
+    public function canViewTenantAuditLogs(): bool
+    {
+        return $this->role->canViewTenantAuditLogs();
     }
 }

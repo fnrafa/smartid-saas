@@ -1,0 +1,31 @@
+<?php
+
+namespace App\Filament\Resources\UserResource\Pages;
+
+use App\Filament\Resources\UserResource\UserResource;
+use Filament\Actions;
+use Filament\Resources\Pages\EditRecord;
+use Illuminate\Support\Facades\Auth;
+
+class EditUser extends EditRecord
+{
+    protected static string $resource = UserResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\DeleteAction::make(),
+        ];
+    }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        $user = Auth::user();
+
+        if ($user && $user->isHead() && !$user->isSuperAdmin()) {
+            $data['tenant_id'] = $user->tenant_id;
+        }
+
+        return $data;
+    }
+}

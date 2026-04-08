@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property string $name
  * @property string $slug
+ * @property bool $is_system
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * 
@@ -35,6 +36,8 @@ use Illuminate\Support\Carbon;
  * @method static Tenant firstOrFail()
  * @method static Tenant firstOrCreate(array $attributes)
  * @method static Tenant updateOrCreate(array $attributes, array $values = [])
+ * @method static Builder|Tenant systemTenant()
+ * @method static Builder|Tenant clientTenants()
  */
 class Tenant extends Model
 {
@@ -43,7 +46,15 @@ class Tenant extends Model
     protected $fillable = [
         'name',
         'slug',
+        'is_system',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_system' => 'boolean',
+        ];
+    }
 
     protected static function newFactory(): TenantFactory
     {
@@ -128,5 +139,20 @@ class Tenant extends Model
     {
         $tier = $this->getCurrentTier();
         return $tier && $tier->has_ai_generate;
+    }
+
+    public function isSystemTenant(): bool
+    {
+        return $this->is_system === true;
+    }
+
+    public function scopeSystemTenant(Builder $query): Builder
+    {
+        return $query->where('is_system', true);
+    }
+
+    public function scopeClientTenants(Builder $query): Builder
+    {
+        return $query->where('is_system', false);
     }
 }

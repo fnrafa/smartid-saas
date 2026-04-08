@@ -8,12 +8,16 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class TenantForm
 {
     public static function configure(Schema $schema): Schema
     {
+        $user = Auth::user();
+        $isSuperAdmin = $user && $user->isSuperAdmin();
+
         return $schema
             ->components([
                 Section::make('Tenant Information')
@@ -22,16 +26,19 @@ class TenantForm
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, callable $set) =>
-                                $set('slug', Str::slug($state))
-                            ),
+                            ->afterStateUpdated(function ($state, callable $set) use ($isSuperAdmin) {
+                                if ($isSuperAdmin) {
+                                    $set('slug', Str::slug($state));
+                                }
+                            }),
 
                         TextInput::make('slug')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
-                            ->disabled()
-                            ->dehydrated(),
+                            ->disabled(!$isSuperAdmin)
+                            ->dehydrated()
+                            ->visible($isSuperAdmin),
                     ])->columns(),
 
                 Section::make('Subscription')
@@ -39,9 +46,11 @@ class TenantForm
                         Select::make('activeSubscription.subscription_tier_id')
                             ->relationship('activeSubscription.tier', 'name')
                             ->label('Subscription Tier')
-                            ->required(),
+                            ->required()
+                            ->disabled(!$isSuperAdmin),
                     ])
-                    ->visibleOn('edit'),
+                    ->visibleOn('edit')
+                    ->visible($isSuperAdmin),
             ]);
     }
 }

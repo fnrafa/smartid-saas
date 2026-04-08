@@ -51,6 +51,8 @@ use Illuminate\Support\Facades\Crypt;
  * @method static Builder|Document public()
  * @method static Builder|Document private()
  * @method static Builder|Document accessibleBy(User $user)
+ * @method static int count()
+ * @method static Builder withoutGlobalScopes()
  */
 class Document extends Model
 {

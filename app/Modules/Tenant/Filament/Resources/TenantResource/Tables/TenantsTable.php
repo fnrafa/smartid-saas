@@ -10,6 +10,7 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use App\Modules\Tenant\Models\Tenant;
 
 class TenantsTable
 {
@@ -19,7 +20,10 @@ class TenantsTable
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn (Tenant $record): string =>
+                        $record->isSystemTenant() ? 'System Tenant' : ''
+                    ),
 
                 TextColumn::make('slug')
                     ->searchable()
@@ -40,9 +44,9 @@ class TenantsTable
                     ->sortable(),
 
                 TextColumn::make('documents_count')
-                    ->counts('documents')
                     ->label('Documents')
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn ($state) => number_format($state ?? 0)),
 
                 TextColumn::make('created_at')
                     ->dateTime()

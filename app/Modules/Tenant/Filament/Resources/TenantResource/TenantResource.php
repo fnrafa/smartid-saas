@@ -13,6 +13,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 use UnitEnum;
 
 class TenantResource extends Resource
@@ -52,10 +53,73 @@ class TenantResource extends Resource
         ];
     }
 
+    public static function canViewAny(): bool
+    {
+        $user = Auth::user();
+        return $user && ($user->canManageTenants() || $user->isHead());
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = Auth::user();
+        return $user && $user->canManageTenants();
+    }
+
+    public static function canEdit($record): bool
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->canManageTenants()) {
+            return true;
+        }
+
+        if ($user->isHead() && $user->tenant_id === $record->id) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = Auth::user();
+        
+        if (!$user || !$user->canManageTenants()) {
+            return false;
+        }
+
+        if ($record->isSystemTenant()) {
+            return false;
+        }
+
+        return true;
+    }
+
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->with(['activeSubscription.tier'])
-            ->withCount(['users', 'documents']);
+        $user = Auth::user();
+        
+        $query = parent::getEloquentQuery()
+            ->with(['activeSubscription.tier']);
+
+        if ($user && $user->canManageTenants()) {
+            $query->withCount([
+                'users',
+                'documents' => function ($query) {
+                    $query->withoutGlobalScopes();
+                }
+            ]);
+            return $query;
+        }
+
+        if ($user && $user->isHead()) {
+            $query->withCount(['users', 'documents']);
+            return $query->where('id', $user->tenant_id);
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 }

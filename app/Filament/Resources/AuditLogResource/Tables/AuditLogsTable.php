@@ -8,6 +8,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class AuditLogsTable
 {
@@ -65,7 +66,21 @@ class AuditLogsTable
             ->recordAction(ViewAction::class)
             ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(function (Builder $query) {
-                return $query->where('tenant_id', auth()->user()->tenant_id);
+                $user = Auth::user();
+
+                if (!$user) {
+                    return $query->whereRaw('1 = 0');
+                }
+
+                if ($user->canViewAllAuditLogs()) {
+                    return $query;
+                }
+
+                if ($user->canViewTenantAuditLogs()) {
+                    return $query->where('tenant_id', $user->tenant_id);
+                }
+
+                return $query->where('user_id', $user->id);
             });
     }
 }
