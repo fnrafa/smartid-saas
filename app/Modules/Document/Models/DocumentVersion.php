@@ -4,15 +4,48 @@ namespace App\Modules\Document\Models;
 
 use App\Models\User;
 use App\Modules\Tenant\Models\Tenant;
+use App\Modules\Tenant\Traits\HasTenantScope;
 use Database\Factories\DocumentVersionFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 
+/**
+ * @property int $id
+ * @property int $document_id
+ * @property int $tenant_id
+ * @property int $user_id
+ * @property int $version_number
+ * @property string $title
+ * @property string $content
+ * @property string|null $category
+ * @property Carbon $created_at
+ * 
+ * @property-read Document $document
+ * @property-read Tenant $tenant
+ * @property-read User $user
+ * 
+ * @method static DocumentVersion|null find(int $id)
+ * @method static DocumentVersion findOrFail(int $id)
+ * @method static DocumentVersion create(array $attributes)
+ * @method static Collection<DocumentVersion> all()
+ * @method static Builder|DocumentVersion where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static Builder|DocumentVersion whereIn(string $column, array $values)
+ * @method static Builder|DocumentVersion orderBy(string $column, string $direction = 'asc')
+ * @method static DocumentVersion|null first()
+ * @method static DocumentVersion firstOrFail()
+ * @method static DocumentVersion firstOrCreate(array $attributes)
+ * @method static DocumentVersion updateOrCreate(array $attributes, array $values = [])
+ */
 class DocumentVersion extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTenantScope;
+
+    protected $table = 'document_versions';
 
     public $timestamps = false;
 
@@ -51,13 +84,26 @@ class DocumentVersion extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function getContentAttribute($value): ?string
+    public function getContentAttribute(?string $value): ?string
     {
-        return $value ? Crypt::decryptString($value) : null;
+        if ($value === null) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($value);
+        } catch (\Exception $e) {
+            return '[Content decryption failed]';
+        }
     }
 
-    public function setContentAttribute($value): void
+    public function setContentAttribute(?string $value): void
     {
-        $this->attributes['content'] = $value ? Crypt::encryptString($value) : null;
+        if ($value === null) {
+            $this->attributes['content'] = null;
+            return;
+        }
+
+        $this->attributes['content'] = Crypt::encryptString($value);
     }
 }

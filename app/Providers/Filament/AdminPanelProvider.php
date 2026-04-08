@@ -2,6 +2,8 @@
 
 namespace App\Providers\Filament;
 
+use App\Modules\Document\Filament\Widgets\DocumentQuotaWidget;
+use App\Modules\Tenant\Middleware\EnsureTenantContext;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -11,7 +13,6 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -31,15 +32,17 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            ->discoverResources(in: app_path('Modules/Document/Filament/Resources'), for: 'App\\Modules\\Document\\Filament\\Resources')
+            ->discoverResources(in: app_path('Modules/Tenant/Filament/Resources'), for: 'App\\Modules\\Tenant\\Filament\\Resources')
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->discoverWidgets(in: app_path('Modules/Document/Filament/Widgets'), for: 'App\\Modules\\Document\\Filament\\Widgets')
             ->widgets([
+                DocumentQuotaWidget::class,
                 AccountWidget::class,
-                FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -54,6 +57,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsureTenantContext::class,
             ]);
     }
 }

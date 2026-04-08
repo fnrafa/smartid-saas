@@ -3,15 +3,48 @@
 namespace App\Models;
 
 use App\Modules\Document\Models\Document;
+use App\Modules\Document\Models\DocumentAccess;
 use App\Modules\Tenant\Enums\UserRole;
 use App\Modules\Tenant\Models\Tenant;
 use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property int $tenant_id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property UserRole $role
+ * @property Carbon|null $email_verified_at
+ * @property string|null $remember_token
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ *
+ * @property-read Tenant $tenant
+ * @property-read Collection<Document> $documents
+ * @property-read Collection<Document> $ownedDocuments
+ * @property-read Collection<AuditLog> $auditLogs
+ * @property-read Collection<DocumentAccess> $documentAccess
+ *
+ * @method static User|null find(int $id)
+ * @method static User findOrFail(int $id)
+ * @method static User create(array $attributes)
+ * @method static Collection<User> all()
+ * @method static Builder|User where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static Builder|User whereIn(string $column, array $values)
+ * @method static User first()
+ * @method static User firstOrFail()
+ * @method static User firstOrCreate(array $attributes)
+ * @method static User updateOrCreate(array $attributes, array $values = [])
+ */
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
@@ -38,6 +71,11 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
@@ -51,6 +89,16 @@ class User extends Authenticatable
     public function ownedDocuments(): HasMany
     {
         return $this->hasMany(Document::class, 'owner_id');
+    }
+
+    public function documentAccess(): HasMany
+    {
+        return $this->hasMany(DocumentAccess::class);
+    }
+
+    public function grantedAccess(): HasMany
+    {
+        return $this->hasMany(DocumentAccess::class, 'granted_by');
     }
 
     public function auditLogs(): HasMany

@@ -5,11 +5,37 @@ namespace App\Modules\Tenant\Models;
 use App\Models\User;
 use App\Modules\Document\Models\Document;
 use Database\Factories\TenantFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
+ * 
+ * @property-read Subscription|null $activeSubscription
+ * @property-read Collection<Subscription> $subscriptions
+ * @property-read Collection<User> $users
+ * @property-read Collection<Document> $documents
+ * 
+ * @method static Tenant|null find(int $id)
+ * @method static Tenant findOrFail(int $id)
+ * @method static Tenant create(array $attributes)
+ * @method static Collection<Tenant> all()
+ * @method static Builder|Tenant where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static Builder|Tenant whereIn(string $column, array $values)
+ * @method static Tenant|null first()
+ * @method static Tenant firstOrFail()
+ * @method static Tenant firstOrCreate(array $attributes)
+ * @method static Tenant updateOrCreate(array $attributes, array $values = [])
+ */
 class Tenant extends Model
 {
     use HasFactory;

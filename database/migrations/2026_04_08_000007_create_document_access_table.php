@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->foreignId('document_id')->constrained()->onDelete('cascade');
             $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('granted_by')->nullable()->constrained('users')->onDelete('set null');
             $table->enum('access_level', ['read', 'edit', 'full']);
             $table->timestamps();
 
@@ -23,6 +24,7 @@ return new class extends Migration {
             $table->index('document_id');
             $table->index('user_id');
             $table->index('tenant_id');
+            $table->index('granted_by');
         });
     }
 
