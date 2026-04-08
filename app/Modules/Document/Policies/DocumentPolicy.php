@@ -21,6 +21,10 @@ class DocumentPolicy
             return false;
         }
 
+        if ($user->isHead()) {
+            return true;
+        }
+
         if ($document->owner_id === $user->id) {
             return true;
         }
@@ -50,6 +54,10 @@ class DocumentPolicy
             return false;
         }
 
+        if ($user->isHead()) {
+            return true;
+        }
+
         if ($document->owner_id === $user->id) {
             return true;
         }
@@ -67,6 +75,10 @@ class DocumentPolicy
             return false;
         }
 
+        if ($user->isHead()) {
+            return true;
+        }
+
         if ($document->owner_id === $user->id) {
             return true;
         }
@@ -80,6 +92,10 @@ class DocumentPolicy
 
     public function restore(User $user, Document $document): bool
     {
+        if ($user->isHead() && $document->tenant_id === $user->tenant_id) {
+            return true;
+        }
+
         return $document->owner_id === $user->id;
     }
 
@@ -92,6 +108,10 @@ class DocumentPolicy
     {
         if ($user->tenant_id !== $document->tenant_id) {
             return false;
+        }
+
+        if ($user->isHead()) {
+            return true;
         }
 
         if ($document->owner_id === $user->id) {

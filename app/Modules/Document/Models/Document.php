@@ -87,9 +87,8 @@ class Document extends Model
                 if (!$document->owner_id) {
                     $document->owner_id = auth()->id();
                 }
-                if (!$document->visibility) {
-                    $document->visibility = DocumentVisibility::PRIVATE;
-                }
+                // Visibility sudah di-handle di form dan CreateDocument::mutateFormDataBeforeCreate
+                // Tidak perlu auto-set lagi disini untuk menghindari override
             }
         });
     }

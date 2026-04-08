@@ -1,11 +1,13 @@
 <?php
 
-
-
 namespace App\Modules\Document\Exceptions;
 
 use Exception;
+use Filament\Notifications\Notification;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class UnauthorizedActionException extends Exception
 {
@@ -19,11 +21,28 @@ class UnauthorizedActionException extends Exception
         return false;
     }
 
-    public function render(): JsonResponse
+    public function render(Request $request): JsonResponse|RedirectResponse|Response
     {
-        return response()->json([
-            'error' => 'UNAUTHORIZED_ACTION',
-            'message' => $this->getMessage(),
-        ], 403);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'error' => 'UNAUTHORIZED_ACTION',
+                'message' => $this->getMessage(),
+            ], 403);
+        }
+
+        if ($request->is('admin/*')) {
+            Notification::make()
+                ->danger()
+                ->title('Akses Ditolak')
+                ->body($this->getMessage())
+                ->persistent()
+                ->send();
+
+            return redirect()
+                ->to('/admin/document-resource/documents')
+                ->with('error', $this->getMessage());
+        }
+
+        abort(403, $this->getMessage());
     }
 }
