@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Crypt;
  * @property Carbon|null $deleted_at
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
+ *
  * @property-read Tenant $tenant
  * @property-read User $user
  * @property-read User $lastEditor
@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Crypt;
  * @property-read Collection<DocumentVersion> $versions
  * @property-read Collection<DocumentAccess> $accessPermissions
  * @property-read Collection<DocumentAccess> $sharedAccess
- * 
+ *
  * @method static Document|null find(int $id)
  * @method static Document findOrFail(int $id)
  * @method static Document create(array $attributes)
@@ -87,8 +87,6 @@ class Document extends Model
                 if (!$document->owner_id) {
                     $document->owner_id = auth()->id();
                 }
-                // Visibility sudah di-handle di form dan CreateDocument::mutateFormDataBeforeCreate
-                // Tidak perlu auto-set lagi disini untuk menghindari override
             }
         });
     }
