@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Document\Exceptions\QuotaExceededException;
 use App\Modules\Document\Exceptions\UnauthorizedActionException;
 use App\Modules\Tenant\Middleware\EnsureTenantContext;
 use Filament\Notifications\Notification;
@@ -22,6 +23,25 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (QuotaExceededException $e, $request) {
+            if ($request->is('admin/*') && !$request->expectsJson()) {
+                Notification::make()
+                    ->danger()
+                    ->title('Quota Terlampaui')
+                    ->body($e->getMessage())
+                    ->persistent()
+                    ->send();
+
+                if ($request->is('admin/document-resource/*')) {
+                    return redirect('/admin/document-resource/documents');
+                }
+
+                return redirect('/admin');
+            }
+
+            return $e->render();
+        });
+
         $exceptions->render(function (UnauthorizedActionException $e, $request) {
             return $e->render($request);
         });
@@ -79,5 +99,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->dontReport([
             UnauthorizedActionException::class,
+            QuotaExceededException::class,
         ]);
     })->create();
